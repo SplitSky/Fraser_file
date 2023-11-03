@@ -24,12 +24,11 @@ def are_dates_in_same_week_and_year(date_str1, date_str2):
     # Check if both dates are in the same week and year
     return week1 == week2 and year1 == year2
 
-
-class dataGroup():
+class dataGroup(object):
     def __init__(self, filename):
         # reads in a csv file and populates it with groups
         self.fullList = []
-        self.outputfilename = output_base_filename
+        self.output_filename = output_base_filename
     
         with open(filename, 'r') as input_file:
             reader = csv.DictReader(input_file)
@@ -38,11 +37,17 @@ class dataGroup():
             for row in reader:
                 if i == 0:
                     print(row.keys())
-                    self.header = list(row.keys())
+                    print(list(row.keys())[0])
+                    self.header = list(str(item) for item in row.keys())
+                    self.header[0] = self.header[0].replace('\ufeff', '')
                 self.check_group(row)
                 i += 1
         # Write into a file
         self.write_row(self.header)
+        for entry in self.fullList:
+            timecards = entry.getRow(24)
+            for timecard in timecards:
+                self.write_row(timecard)
         
     def check_groupExists(self, userName, projectName, shareDate):
         # returns the index or false
@@ -52,8 +57,10 @@ class dataGroup():
                 # found group > return index
                 if (are_dates_in_same_week_and_year(group.Date_Shared_Created, shareDate)):
                     # check for date
+                    print("Group found")
                     return i
             i += 1
+        print("Group not found")
         return False
         
     def check_group(self, row):
@@ -68,6 +75,8 @@ class dataGroup():
     def write_row(self, row):
         with open(self.output_filename, 'a', newline='', encoding='iso-8859-1') as output_file:
             csv_writer = csv.writer(output_file)
+            print("Pringitng row")
+            print(row)
             csv_writer.writerow(row)
             
 class group(object):
@@ -154,6 +163,7 @@ class group(object):
                     j -= 1
                     # assign leftover hours
                     self.Hours_Actual = total_time
+                    rows_out.append(self.compileData())
                 else:
                     # assign spare ID
                     self.Time_Entry_ID = self.spareIDs[j]
@@ -161,10 +171,11 @@ class group(object):
                     # assign leftover hours
                     self.Hours_Actual = max_time
                     total_time -= max_time
-                    rows_out.append()
+                    rows_out.append(self.compileData())
                 j += 1
+            return rows_out
         else:
-            return [self.compileData()]    
+            return [self.compileData()]
     
 # Open the input CSV file
 def main():
