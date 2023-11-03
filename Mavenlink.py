@@ -29,15 +29,20 @@ class dataGroup():
     def __init__(self, filename):
         # reads in a csv file and populates it with groups
         self.fullList = []
+        self.outputfilename = output_base_filename
+    
         with open(filename, 'r') as input_file:
             reader = csv.DictReader(input_file)
             fieldnames = reader.fieldnames
-            
             i = 0
             for row in reader:
                 if i == 0:
                     print(row.keys())
+                    self.header = list(row.keys())
                 self.check_group(row)
+                i += 1
+        # Write into a file
+        self.write_row(self.header)
         
     def check_groupExists(self, userName, projectName, shareDate):
         # returns the index or false
@@ -57,8 +62,14 @@ class dataGroup():
             self.fullList.append(group(row))
         else:
             hoursTemp = float(row['Hours Actual'])
-            self.fullList[exist].Hours_Actual += hoursTemp
-    
+            idTemp = row['\ufeffTime Entry: ID']
+            self.fullList[exist].updateExisting(hoursTemp, idTemp)
+        
+    def write_row(self, row):
+        with open(self.output_filename, 'a', newline='', encoding='iso-8859-1') as output_file:
+            csv_writer = csv.writer(output_file)
+            csv_writer.writerow(row)
+            
 class group(object):
     def __init__(self,row):
         self.Time_Entry_ID = row['\ufeffTime Entry: ID']
@@ -89,10 +100,66 @@ class group(object):
         self.TE_Bill_Rate = row['TE Bill Rate']
         self.TE_Cost_Rate = row['TE Cost Rate']
         
-
+        self.spareIDs = [self.Time_Entry_ID]
+        
+    def change_Date(self):
+        self.Date_Shared = get_monday_of_week(self.Date_Shared)
+        
+    def updateExisting(self, hours, timeCardID):
+        self.Hours_Actual += hours
+        self.spareIDs.append(timeCardID)
+        
+    def compileData(self):
+         return [
+                self.Time_Entry_ID,
+                self.Time_Entry_Approved,
+                self.Time_Entry_Billable,
+                self.Time_Entry_Notes,
+                self.Time_Entry_Requires_Approval,
+                self.Time_Entry_Status,
+                self.Note,
+                self.Time_Entry_Taxable,
+                self.Time_Entry_Type,
+                self.User_Name,
+                self.Project_Name,
+                self.Task_Name,
+                self.Role,
+                self.Currency,
+                self.Location,
+                self.Date_Shared,
+                self.Date_Shared_Created,
+                self.Date_Submission_Submitted,
+                self.Date_Submission_Approved,
+                self.Date_Submission_Rejected,
+                self.Hours_Actual,
+                self.Fees_Actual,
+                self.Cost_Actual,
+                self.User_Cost_Rate,
+                self.Users_Bill_Rate,
+                self.TE_Bill_Rate,
+                self.TE_Cost_Rate
+            ]
+        
+    def getRow(self, max_time):
+        self.change_Date() # Fix date
+        if (self.Hours_Actual > max_time):
+            # fragment timecards
+            rows_out = []
+            total_time = self.Hours_Actual
+            while (total_time > 0):
+                if (total_time < max_time and total_time != 0):
+                    # final card
+                else:
+                    # full load
+                    rows_out.append()
+        else:
+            return [self.compileData()]
+    
+    
     
 # Open the input CSV file
 def main():
-    a = dataGroup('Project_Timecard_test.csv')
+    full_name = 'Project_Timecard_test.csv'
+    a = dataGroup('Test1.csv')
     
 main()
