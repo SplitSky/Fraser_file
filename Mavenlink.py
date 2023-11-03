@@ -148,23 +148,23 @@ class group(object):
             total_time = self.Hours_Actual
             j = 0
             while (total_time > 0):
-                if (total_time < max_time and total_time != 0):
+                if (total_time < max_time and total_time > 0):
                     # assign spare ID
-                    
+                    self.Time_Entry_ID = self.spareIDs[j]
+                    j -= 1
                     # assign leftover hours
-                    
+                    self.Hours_Actual = total_time
                 else:
                     # assign spare ID
-                    
-                    # assign hours
-                    
+                    self.Time_Entry_ID = self.spareIDs[j]
+                    j -= 1
+                    # assign leftover hours
+                    self.Hours_Actual = max_time
                     total_time -= max_time
                     rows_out.append()
                 j += 1
         else:
-            return [self.compileData()]
-    
-    
+            return [self.compileData()]    
     
 # Open the input CSV file
 def main():
