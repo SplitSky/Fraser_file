@@ -146,12 +146,21 @@ class group(object):
             # fragment timecards
             rows_out = []
             total_time = self.Hours_Actual
+            j = 0
             while (total_time > 0):
                 if (total_time < max_time and total_time != 0):
-                    # final card
+                    # assign spare ID
+                    
+                    # assign leftover hours
+                    
                 else:
-                    # full load
+                    # assign spare ID
+                    
+                    # assign hours
+                    
+                    total_time -= max_time
                     rows_out.append()
+                j += 1
         else:
             return [self.compileData()]
     
