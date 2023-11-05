@@ -1,19 +1,7 @@
 import csv
 from datetime import datetime, timedelta
-import hashlib
 
 output_base_filename = "output.csv"
-j = 0
-def hash_strings(*args):
-    # Concatenate the strings
-    concatenated_strings = ''.join(args)
-    # Create a SHA-256 hash object
-    sha256_hash = hashlib.sha256()
-    # Update the hash object with the concatenated strings
-    sha256_hash.update(concatenated_strings.encode('utf-8'))
-    # Get the hexadecimal representation of the hash
-    hashed_value = sha256_hash.hexdigest()
-    return hashed_value
 
 def get_week_and_year(date_str):
     date_obj = datetime.strptime(date_str, "%d/%m/%Y")  # Assuming date format is "MM/DD/YYYY"
@@ -27,18 +15,20 @@ def get_monday_of_week(date_str):
     return monday.strftime("%d/%m/%Y")
 
 def are_dates_in_same_week_and_year(date_str1, date_str2):
+    # Convert the input date strings to datetime objects using the same format
     date_obj1 = datetime.strptime(date_str1, "%d/%m/%Y")
     date_obj2 = datetime.strptime(date_str2, "%d/%m/%Y")
+    # Get the week and year for both dates
     week1, year1 = get_week_and_year(date_str1)
     week2, year2 = get_week_and_year(date_str2)
+    # Check if both dates are in the same week and year
     return week1 == week2 and year1 == year2
 
 class dataGroup(object):
     def __init__(self, filename):
+        # reads in a csv file and populates it with groups
         self.fullList = []
         self.output_filename = output_base_filename
-        self.lookupHashes = {}
-        self.counter = 0
     
         with open(filename, 'r') as input_file:
             reader = csv.DictReader(input_file)
@@ -46,37 +36,46 @@ class dataGroup(object):
             i = 0
             for row in reader:
                 if i == 0:
-                    self.header = [field.replace('\ufeff', '') for field in fieldnames]
+                    #print(row.keys())
+                    #print(list(row.keys())[0])
+                    self.header = list(str(item) for item in row.keys())
+                    self.header[0] = self.header[0].replace('\ufeff', '')
                 self.check_group(row)
+                
+                if i % 100 == 0:
+                    print(f'{i//100}00')
+                elif i % 1000 == 0:
+                    print(f'{i// 1000}000')
+                
                 i += 1
-        # Writting into a file
+        # Write into a file
+        print("Done processing. Now Writing")
+        print(f'number of groups = {len(self.fullList)}')
         self.write_row(self.header)
         for entry in self.fullList:
             timecards = entry.getRow(24)
             for timecard in timecards:
                 self.write_row(timecard)
-
-    def check_groupExists(self, row):
-        target_hash = self.hash_group(row)
-        if target_hash in self.lookupHashes.keys():
-            return self.lookupHashes[target_hash]
-        else:
-            return False
+        print("Finished writing")
         
-    def hash_group(self, row):
-        userName=row['User: Name']
-        projectName=row['Project: Name']
-        shareDate=row['Date (Shared)']
-        temp_date = get_monday_of_week(shareDate)
-        return hash_strings(userName, projectName, temp_date)
+    def check_groupExists(self, userName, projectName, shareDate):
+        # returns the index or false
+        i = 0
+        for group in self.fullList:
+            if (group.User_Name == userName and group.Project_Name == projectName):
+                # found group > return index
+                if (are_dates_in_same_week_and_year(group.Date_Shared_Created, shareDate)):
+                    # check for date
+                    #print("Group found")
+                    return i
+            i += 1
+        #print("Group not found")
+        return False
         
     def check_group(self, row):
-        exist = self.check_groupExists(row)
-        if isinstance(exist, bool):
+        exist = self.check_groupExists(userName=row['User: Name'], projectName=row['Project: Name'], shareDate=row['Date (Shared)'])
+        if (exist == False):
             self.fullList.append(group(row))
-            # generate hash for lookup later
-            self.lookupHashes[self.hash_group(row)] = self.counter
-            self.counter += 1 # index of the group appended
         else:
             hoursTemp = float(row['Hours Actual'])
             idTemp = row['\ufeffTime Entry: ID']
@@ -85,11 +84,12 @@ class dataGroup(object):
     def write_row(self, row):
         with open(self.output_filename, 'a', newline='', encoding='utf-8') as output_file:
             csv_writer = csv.writer(output_file)
+            #print("Pringitng row")
+            #print(row)
             csv_writer.writerow(row)
             
-            
 class group(object):
-    def __init__(self, row):
+    def __init__(self,row):
         self.Time_Entry_ID = row['\ufeffTime Entry: ID']
         self.Time_Entry_Approved = row['Time Entry: Approved']
         self.Time_Entry_Billable = row['Time Entry: Billable']
@@ -117,6 +117,7 @@ class group(object):
         self.Users_Bill_Rate = row['Users Bill Rate (from User Record)']
         self.TE_Bill_Rate = row['TE Bill Rate']
         self.TE_Cost_Rate = row['TE Cost Rate']
+        
         self.spareIDs = [self.Time_Entry_ID]
         
     def change_Date(self):
@@ -158,33 +159,39 @@ class group(object):
             ]
         
     def getRow(self, max_time):
-        self.change_Date()
-        total_time = 0
+        print("Get Row called")
+        self.change_Date() # Fix date
         if (self.Hours_Actual > max_time):
+            # fragment timecards
             rows_out = []
             total_time = self.Hours_Actual
             j = 0
             while (total_time > 0):
                 if (total_time < max_time and total_time > 0):
+                    # assign spare ID
                     self.Time_Entry_ID = self.spareIDs[j]
                     j -= 1
+                    # assign leftover hours
                     self.Hours_Actual = total_time
                     total_time = 0
                     rows_out.append(self.compileData())
                 else:
+                    # assign spare ID
                     self.Time_Entry_ID = self.spareIDs[j]
                     j -= 1
+                    # assign leftover hours
                     self.Hours_Actual = max_time
                     total_time -= max_time
                     rows_out.append(self.compileData())
                 j += 1
             return rows_out
         else:
-            return [self.compileData]
+            return [self.compileData()]
     
+# Open the input CSV file
 def main():
     full_name = 'Project_Timecards.csv'
-    test_filename = 'Test1.csv'
-    a = dataGroup(test_filename)
+    test_name = 'Test1.csv'
+    a = dataGroup(full_name)
     
 main()
