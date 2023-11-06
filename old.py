@@ -49,8 +49,7 @@ class dataGroup(object):
                     print(f'{i// 1000}000')
                 
                 i += 1
-                
-        print(f'lenght = {len(self.fullList)}')
+            
         # Write into a file
         print("Done processing. Now Writing")
         print(f'number of groups = {len(self.fullList)}')
@@ -67,9 +66,8 @@ class dataGroup(object):
         for group in self.fullList:
             if (group.User_Name == userName and group.Project_Name == projectName):
                 # found group > return index
-                print("username and project id found")
                 if (are_dates_in_same_week_and_year(group.Date_Shared, shareDate)):
-                    print("week found")
+              
                     # check for date
                     #print("Group found")
                     return i
@@ -79,7 +77,7 @@ class dataGroup(object):
         
     def check_group(self, row):
         exist = self.check_groupExists(userName=row['User: Name'], projectName=row['Project: Name'], shareDate=row['Date (Shared)'])
-        print(f'exist = {exist}')
+        
         if (isinstance(exist, bool)):
             self.fullList.append(group(row))
         else:
