@@ -2,6 +2,7 @@ import csv
 from datetime import datetime, timedelta
 
 output_base_filename = "output.csv"
+encoding = 'iso-8859-1'
 
 def get_week_and_year(date_str):
     date_obj = datetime.strptime(date_str, "%d/%m/%Y")  # Assuming date format is "MM/DD/YYYY"
@@ -30,7 +31,7 @@ class dataGroup(object):
         self.fullList = []
         self.output_filename = output_base_filename
     
-        with open(filename, 'r') as input_file:
+        with open(filename, 'r', encoding=encoding) as input_file:
             reader = csv.DictReader(input_file)
             fieldnames = reader.fieldnames
             i = 0
@@ -48,6 +49,8 @@ class dataGroup(object):
                     print(f'{i// 1000}000')
                 
                 i += 1
+                
+        print(f'lenght = {len(self.fullList)}')
         # Write into a file
         print("Done processing. Now Writing")
         print(f'number of groups = {len(self.fullList)}')
@@ -64,7 +67,9 @@ class dataGroup(object):
         for group in self.fullList:
             if (group.User_Name == userName and group.Project_Name == projectName):
                 # found group > return index
-                if (are_dates_in_same_week_and_year(group.Date_Shared_Created, shareDate)):
+                print("username and project id found")
+                if (are_dates_in_same_week_and_year(group.Date_Shared, shareDate)):
+                    print("week found")
                     # check for date
                     #print("Group found")
                     return i
@@ -74,11 +79,12 @@ class dataGroup(object):
         
     def check_group(self, row):
         exist = self.check_groupExists(userName=row['User: Name'], projectName=row['Project: Name'], shareDate=row['Date (Shared)'])
-        if (exist == False):
+        print(f'exist = {exist}')
+        if (isinstance(exist, bool)):
             self.fullList.append(group(row))
         else:
             hoursTemp = float(row['Hours Actual'])
-            idTemp = row['\ufeffTime Entry: ID']
+            idTemp = row['Time Entry: ID']
             self.fullList[exist].updateExisting(hoursTemp, idTemp)
         
     def write_row(self, row):
@@ -90,33 +96,33 @@ class dataGroup(object):
             
 class group(object):
     def __init__(self,row):
-        self.Time_Entry_ID = row['\ufeffTime Entry: ID']
-        self.Time_Entry_Approved = row['Time Entry: Approved']
-        self.Time_Entry_Billable = row['Time Entry: Billable']
-        self.Time_Entry_Notes = row['Time Entry: Notes']
-        self.Time_Entry_Requires_Approval = row['Time Entry: Requires Approval']
-        self.Time_Entry_Status = row['Time Entry: Status']
-        self.Note = row['Time Entry: Status Note']
-        self.Time_Entry_Taxable = row['Time Entry: Taxable']
-        self.Time_Entry_Type = row['Time Entry: Type']
-        self.User_Name = row['User: Name']
-        self.Project_Name = row['Project: Name']
-        self.Task_Name = row['Task: Name']
-        self.Role = row['Role']
-        self.Currency = row['Currency']
-        self.Location = row['Location']
-        self.Date_Shared = row['Date (Shared)']
-        self.Date_Shared_Created = row['Date (Shared Created)']
-        self.Date_Submission_Submitted = row['Date (Submission Submitted)']
-        self.Date_Submission_Approved = row['Date (Submission Approved)']
-        self.Date_Submission_Rejected = row['Date (Submission Rejected)']
+        self.Time_Entry_ID = str(row['Time Entry: ID'])
+        self.Time_Entry_Approved = str(row['Time Entry: Approved'])
+        self.Time_Entry_Billable = str(row['Time Entry: Billable'])
+        self.Time_Entry_Notes = str(row['Time Entry: Notes'])
+        self.Time_Entry_Requires_Approval = str(row['Time Entry: Requires Approval'])
+        self.Time_Entry_Status = str(row['Time Entry: Status'])
+        self.Note = str(row['Time Entry: Status Note'])
+        self.Time_Entry_Taxable = str(row['Time Entry: Taxable'])
+        self.Time_Entry_Type = str(row['Time Entry: Type'])
+        self.User_Name = str(row['User: Name'])
+        self.Project_Name = str(row['Project: Name'])
+        self.Task_Name = str(row['Task: Name'])
+        self.Role = str(row['Role'])
+        self.Currency = str(row['Currency'])
+        self.Location = str(row['Location'])
+        self.Date_Shared = str(row['Date (Shared)'])
+        self.Date_Shared_Created = str(row['Date (Shared Created)'])
+        self.Date_Submission_Submitted = str(row['Date (Submission Submitted)'])
+        self.Date_Submission_Approved = str(row['Date (Submission Approved)'])
+        self.Date_Submission_Rejected = str(row['Date (Submission Rejected)'])
         self.Hours_Actual = float(row['Hours Actual'])
-        self.Fees_Actual = row['Fees Actual']
-        self.Cost_Actual = row['Cost Actual']
-        self.User_Cost_Rate = row['User Cost Rate']
-        self.Users_Bill_Rate = row['Users Bill Rate (from User Record)']
-        self.TE_Bill_Rate = row['TE Bill Rate']
-        self.TE_Cost_Rate = row['TE Cost Rate']
+        self.Fees_Actual = str(row['Fees Actual'])
+        self.Cost_Actual = str(row['Cost Actual'])
+        self.User_Cost_Rate = str(row['User Cost Rate'])
+        self.Users_Bill_Rate = str(row['Users Bill Rate (from User Record)'])
+        self.TE_Bill_Rate = str(row['TE Bill Rate'])
+        self.TE_Cost_Rate = str(row['TE Cost Rate'])
         
         self.spareIDs = [self.Time_Entry_ID]
         
@@ -170,20 +176,20 @@ class group(object):
                 if (total_time < max_time and total_time > 0):
                     # assign spare ID
                     self.Time_Entry_ID = self.spareIDs[j]
-                    j -= 1
                     # assign leftover hours
                     self.Hours_Actual = total_time
                     total_time = 0
                     rows_out.append(self.compileData())
+                    j += 1
                 else:
                     # assign spare ID
                     self.Time_Entry_ID = self.spareIDs[j]
-                    j -= 1
                     # assign leftover hours
                     self.Hours_Actual = max_time
                     total_time -= max_time
                     rows_out.append(self.compileData())
-                j += 1
+                    j += 1
+
             return rows_out
         else:
             return [self.compileData()]
@@ -191,7 +197,7 @@ class group(object):
 # Open the input CSV file
 def main():
     full_name = 'Project_Timecards.csv'
-    test_name = 'Test1.csv'
-    a = dataGroup(full_name)
+    test_name = 'Test2.csv'
+    a = dataGroup(test_name)
     
 main()
