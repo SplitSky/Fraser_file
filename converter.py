@@ -3,7 +3,7 @@ import csv
 def replace_unsupported_chars(text):
     return ''.join(char if ord(char) < 256 else '?' for char in text)
 
-input_file = 'Timecards.csv'
+input_file = 'Test.csv'
 output_file = 'FullDataConverted.csv'
 
 with open(input_file, 'r', encoding='utf-8-sig') as utf8_file:

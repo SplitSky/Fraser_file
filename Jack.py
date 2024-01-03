@@ -36,11 +36,21 @@ class dataGroup(object):
 class group(object):
     def __init__(self,row):
         self.other_data = []
-        self.dictKeys = ['EPH_PN_Reference_only', 'Item_Number', 'Item_Name', 'Product_Family', 'Item_Category', 'Product_Type', 'Revenue_Type', 'Kofax_Product_Code', 'Attribute_Type', 'Product_Line_Code', 'Fulfillment_Channel', 'Maintenance_Required', 'Default_Renewal_Pricing_Method', 'Term_on_Prem_Schedule', 'Delivery_Method', 'Asset_Conversion', 'Asset_Amendment_Behavior', 'Entitlement_Conversion_used_with_Term_on_Prem_only', 'Country_Of_Origin', 'Warehouse', 'Dropship_Enabled', 'Special_Handling', 'Default_Term', 'Default_Pack', 'Default_SLO', 'Default_Quantity', 'Subscription_Term', 'Default_Attribute', 'Charge_Type', 'Billing_Type', 'Subscription_Type', 'Price_Editable', 'Quantity_Editable', 'Subscription_Pricing', 'eCopy_Loyalty_Check', 'Perpetual_to_Term_Mapping_CPQ_rationalized_part_number', 'Perpetual_to_Term_Mapping_AX_rationalized_part_number', 'Licence_Fulfillment_Only', 'NSI_Upgrade_Check_for_V7', 'Associated_Maintenance_sku', 'Bundle_set_up_required', 'Configurations_Event', 'Configuration_Type', 'Pricing_Method', 'Block_Pricing_Field', 'Services_Billing_Type', 'Allow_Override_Prediscounted_Sales_Price', 'Feature', 'Configuration_attributes_to_set_up_1', 'Configuration_attributes_to_set_up_2', 'Configuration_attributes_to_set_up_3', 'Product_Options_Set_up_1']
+        print('Keys')
+        print(list(row.keys()))
+        key1  = '\ufeffDuplicate: Master Bean No'
+        key2 =  'Kofax Account Email Domains (PROD)'
+        key3 = 'Duplicate: Account: List of Unique Email Domains'
+        key4 = ''
+        self.dictKeys = [key1, key2]
+        
         for name in self.dictKeys:
             self.other_data.append(row[name])
         # Delimit sku
-        self.sku = row['Legacy_SKU_Search'].split(';')
+        if len(row[key3]) != row[key3].split(';'):
+            print("Delimited")
+        self.sku = row[key3].split(';')
+
     
     def getRows(self):
         data_out = []
@@ -58,7 +68,7 @@ class group(object):
 # Open the input CSV file
 def main():
     full_name = 'Project_Timecards.csv'
-    test_name = 'FullDataConverted.csv'
+    test_name = 'Test.csv'
     a = dataGroup(test_name)
     
 main()

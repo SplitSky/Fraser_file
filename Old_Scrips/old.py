@@ -6,19 +6,24 @@ encoding = 'iso-8859-1'
 
 def get_week_and_year(date_str):
     date_obj = datetime.strptime(date_str, "%d/%m/%Y")  # Assuming date format is "MM/DD/YYYY"
+    date_obj += timedelta(days=1)
     week_number = date_obj.strftime("%U")  # Get the week number
     year = date_obj.year
     return int(week_number), year
 
-def get_monday_of_week(date_str):
+def get_sunday_of_week(date_str):
     date_obj = datetime.strptime(date_str, "%d/%m/%Y")  # Assuming date format is "MM/DD/YYYY"
+    date_obj += timedelta(days=1)
     monday = date_obj - timedelta(days=date_obj.weekday())  # Calculate Monday by subtracting days
-    return monday.strftime("%d/%m/%Y")
+    sunday = monday - timedelta(days=1)
+    return sunday.strftime("%d/%m/%Y")
 
 def are_dates_in_same_week_and_year(date_str1, date_str2):
     # Convert the input date strings to datetime objects using the same format
     date_obj1 = datetime.strptime(date_str1, "%d/%m/%Y")
+    date_obj1 += timedelta(days=1)
     date_obj2 = datetime.strptime(date_str2, "%d/%m/%Y")
+    date_obj2 += timedelta(days=1)
     # Get the week and year for both dates
     week1, year1 = get_week_and_year(date_str1)
     week2, year2 = get_week_and_year(date_str2)
@@ -47,7 +52,6 @@ class dataGroup(object):
                     print(f'{i//100}00')
                 elif i % 1000 == 0:
                     print(f'{i// 1000}000')
-                
                 i += 1
             
         # Write into a file
@@ -125,7 +129,7 @@ class group(object):
         self.spareIDs = [self.Time_Entry_ID]
         
     def change_Date(self):
-        self.Date_Shared = get_monday_of_week(self.Date_Shared)
+        self.Date_Shared = get_sunday_of_week(self.Date_Shared)
         
     def updateExisting(self, hours, timeCardID):
         self.Hours_Actual += hours
@@ -195,7 +199,7 @@ class group(object):
 # Open the input CSV file
 def main():
     full_name = 'Project_Timecards.csv'
-    test_name = 'Test2.csv'
+    test_name = 'FullDataConverted.csv'
     a = dataGroup(test_name)
     
 main()
